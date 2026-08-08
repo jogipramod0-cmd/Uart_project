@@ -1,0 +1,142 @@
+`timescale 1ns/1ps
+
+module uart_tb;
+    reg        clk;
+    reg        rst;
+    reg        tx_start;
+    reg [7:0]  tx_data;
+    wire       tx;
+    wire       tx_busy;
+    wire [7:0] rx_data;
+    wire       rx_done;
+    uart #(
+        .CLK_FREQ(100),
+        .BAUD_RATE(10)
+    ) dut (
+
+        .clk(clk),
+        .rst(rst),
+
+        .tx_start(tx_start),
+        .tx_data(tx_data),
+
+        .tx(tx),
+        .tx_busy(tx_busy),
+
+        .rx(tx),
+
+        .rx_data(rx_data),
+        .rx_done(rx_done)
+
+    );
+    // Clock period = 10 ns
+    // Frequency = 100 MHz
+    always #5 clk = ~clk;
+    initial begin
+        clk      = 1'b0;
+        rst      = 1'b1;
+
+        tx_start = 1'b0;
+        tx_data  = 8'h00;
+
+
+        $display("========================================");
+        $display("       UART SIMULATION STARTED");
+        $display("========================================");
+        #20;
+
+        rst = 1'b0;
+
+        $display("Reset released");
+        $display("");
+        tx_data = 8'hA5;
+
+        $display("TEST 1");
+        $display("Transmitting = %h", tx_data);
+        tx_start = 1'b1;
+        #10;
+
+        tx_start = 1'b0;
+        wait(rx_done == 1'b1);
+        $display("Received     = %h", rx_data);
+
+
+        if (rx_data == tx_data)
+            $display("RESULT       = TEST 1 PASSED");
+        else
+            $display("RESULT       = TEST 1 FAILED");
+
+
+        $display("");
+        wait(tx_busy == 1'b0);
+
+        #20;
+
+        tx_data = 8'h3C;
+
+        $display("TEST 2");
+        $display("Transmitting = %h", tx_data);
+
+
+        tx_start = 1'b1;
+
+        #10;
+
+        tx_start = 1'b0;
+
+
+        wait(rx_done == 1'b1);
+
+
+        $display("Received     = %h", rx_data);
+
+
+        if (rx_data == tx_data)
+            $display("RESULT       = TEST 2 PASSED");
+        else
+            $display("RESULT       = TEST 2 FAILED");
+
+
+        $display("");
+        wait(tx_busy == 1'b0);
+
+        #20;
+
+        tx_data = 8'hF0;
+
+        $display("TEST 3");
+        $display("Transmitting = %h", tx_data);
+
+
+        tx_start = 1'b1;
+
+        #10;
+
+        tx_start = 1'b0;
+
+
+        wait(rx_done == 1'b1);
+
+
+        $display("Received     = %h", rx_data);
+
+
+        if (rx_data == tx_data)
+            $display("RESULT       = TEST 3 PASSED");
+        else
+            $display("RESULT       = TEST 3 FAILED");
+
+
+        $display("");
+
+        $display("========================================");
+        $display("       UART SIMULATION FINISHED");
+        $display("========================================");
+
+        #50;
+
+        $finish;
+
+    end
+
+endmodule
