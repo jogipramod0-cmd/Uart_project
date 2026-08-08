@@ -1,0 +1,82 @@
+module uart_tx #(
+    parameter CLK_FREQ  = 50_000_000,
+    parameter BAUD_RATE = 9600
+)(
+    input        clk,
+    input        rst,
+    input        tx_start,
+    input  [7:0] tx_data,
+    output reg   tx,
+    output reg   tx_busy
+);
+
+    localparam integer CLKS_PER_BIT = CLK_FREQ / BAUD_RATE;
+
+    reg [15:0] clk_count;
+    reg [3:0]  bit_index;
+
+    always @(posedge clk or posedge rst) begin
+
+        if (rst) begin
+            tx        <= 1'b1;
+            tx_busy   <= 1'b0;
+            clk_count <= 0;
+            bit_index <= 0;
+        end
+
+        else begin
+
+            if (tx_start && !tx_busy) begin
+
+                tx_busy   <= 1'b1;
+                clk_count <= 0;
+                bit_index <= 0;
+
+            end
+
+            else if (tx_busy) begin
+
+                if (clk_count < CLKS_PER_BIT - 1) begin
+                    clk_count <= clk_count + 1;
+                end
+
+                else begin
+
+                    clk_count <= 0;
+
+                    case (bit_index)
+
+                        4'd0: tx <= 1'b0;   
+
+                        4'd1: tx <= tx_data[0];
+
+                        4'd2: tx <= tx_data[1];
+
+                        4'd3: tx <= tx_data[2];
+
+                        4'd4: tx <= tx_data[3];
+
+                        4'd5: tx <= tx_data[4];
+
+                        4'd6: tx <= tx_data[5];
+
+                        4'd7: tx <= tx_data[6];
+
+                        4'd8: tx <= tx_data[7];
+
+                        4'd9: begin
+                            tx      <= 1'b1;    
+                            tx_busy <= 1'b0;
+                        end
+
+                    endcase
+
+                    if (bit_index < 4'd9)
+                        bit_index <= bit_index + 1;
+
+                end
+            end
+        end
+    end
+
+endmodule
